@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+    <script src="components/barplot1.js"></script>
+    <script src="components/barplot2.js"></script>
+    <script src="components/datatable.js"></script>
+
+
+    <title>Citi bike</title>
+    <style>
+        body {
+            background: #eee;
+            overflow-y: scroll;
+        }
+
+        .container {
+            width: 800px;
+            background: white;
+        }
+
+        /* In the <style> tag in index.html */
+        .brushed {
+            stroke-width: 1;
+            stroke: yellow;
+            r: 5;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav class="container navbar navbar-light bg-light">
+            <div class="container-fluid">
+                <span class="navbar-brand mb-0 h1">Citi bike</span>
+            </div>
+        </nav>
+
+    </header>
+
+    <main class="container pb-3">
+      <div class="row pt-2">
+          <div class="col-1 text-end pe-2"><strong>Start Station:</strong></div>
+          <select id ="s-station" class="col-11">
+              <option value="W 20 St & 11 Ave">W 20 St & 11 Ave</option>
+              <option value="E 17 St & Broadway">E 17 St & Broadway</option>
+              <option value="Broadway & E 14 St">Broadway & E 14 St</option>
+              <option value="Broadway & W 58 St">Broadway & W 58 St</option>
+              <option value="Broadway & W 24 St">Broadway & W 24 St</option>
+              <option value="Central Park S & 6 Ave">Central Park S & 6 Ave</option>
+              <option value="West Thames St">West Thames St</option>
+              <option value="West St & Chambers St">West St & Chambers St</option>
+              <option value="Lafayette St & E 8 St">Lafayette St & E 8 St</option>
+              <option value="8 Ave & W 31 St N">8 Ave & W 31 St N</option>
+              <option value="9 Ave & W 14 St">9 Ave & W 14 St</option>
+              <option value="Vesey Pl & River Terrace">Vesey Pl & River Terrace</option>
+              <option value="Broadway & E 22 St">Broadway & E 22 St</option>
+              <option value="Christopher St & Greenwich St">Christopher St & Greenwich St</option>
+              <option value="Centre St & Chambers St">Centre St & Chambers St</option>
+              <option value="Pershing Square North">Pershing Square North</option>
+              <option value="Carmine St & 6 Ave">Carmine St & 6 Ave</option>
+              <option value="Cleveland Pl & Spring St">Cleveland Pl & Spring St</option>
+              <option value="E 24 St & Park Ave S">E 24 St & Park Ave S</option>
+          </select>
+      </div>
+      <div class="row">
+          <div class="col-1 text-end pe-2"><strong>End Station:</strong></div>
+          <select id ="e-station" class="col-11">
+            <option value="W 20 St & 11 Ave">W 20 St & 11 Ave</option>
+            <option value="E 17 St & Broadway">E 17 St & Broadway</option>
+            <option value="Broadway & E 14 St">Broadway & E 14 St</option>
+            <option value="Broadway & W 58 St">Broadway & W 58 St</option>
+            <option value="Broadway & W 24 St">Broadway & W 24 St</option>
+            <option value="Central Park S & 6 Ave">Central Park S & 6 Ave</option>
+            <option value="West Thames St">West Thames St</option>
+            <option value="West St & Chambers St">West St & Chambers St</option>
+            <option value="Lafayette St & E 8 St">Lafayette St & E 8 St</option>
+            <option value="8 Ave & W 31 St N">8 Ave & W 31 St N</option>
+            <option value="9 Ave & W 14 St">9 Ave & W 14 St</option>
+            <option value="Vesey Pl & River Terrace">Vesey Pl & River Terrace</option>
+            <option value="Broadway & E 22 St">Broadway & E 22 St</option>
+            <option value="Christopher St & Greenwich St">Christopher St & Greenwich St</option>
+            <option value="Centre St & Chambers St">Centre St & Chambers St</option>
+            <option value="Pershing Square North">Pershing Square North</option>
+            <option value="Carmine St & 6 Ave">Carmine St & 6 Ave</option>
+            <option value="Cleveland Pl & Spring St">Cleveland Pl & Spring St</option>
+            <option value="E 24 St & Park Ave S">E 24 St & Park Ave S</option>
+          </select>
+      </div>
+        <div class="row">
+            <div class="col offset-1">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="use-color" checked>
+                    <label class="form-check-label" for="use-color">Color-encode Class</label>
+                </div>
+            </div>
+        </div>
+        <div class="text-center">
+            <svg width="400" height="400" id="barplot1">
+            </svg>
+
+            <svg width="400" height="400" id="barplot2">
+            </svg>
+        </div>
+        <table class="table table-striped text-center">
+            <thead>
+                <tr>
+                    <th>Gender</th>
+                    <th>Birth / Year</th>
+                    <th>Bike_Id</th>
+                    <th>Subscriber</th>
+                </tr>
+            </thead>
+            <tbody id="data-table">
+
+            </tbody>
+        </table>
+    </main>
+
+    <script>
+        let data, brushedData, barplot1, barplot2, dataTable;
+
+        function updateBarplot1() {
+            //let sstation = d3.select("[name=s-station]").property("value");
+            let sstation = document.getElementById("s-station").value;
+            let estation = document.getElementById("e-station").value;
+            //console.log(sstation)
+            //console.log(estation)
+            barplot1.update(sstation, estation);
+        }
+
+
+        function updateBarplot2() {
+            barplot2.update(brushedData && brushedData.length > 0 ? brushedData : data, "birth year");
+        }
+
+        function updateDataTable() {
+            dataTable.update(brushedData && brushedData.length > 0 ? brushedData : data, data.columns)
+        }
+
+
+        d3.csv("201306-citibike-tripdata.csv")
+            .then(csvData => {
+                csvData.forEach(d => {
+                    d["starttime"] = new Date(d["starttime"]).getDay();
+                    d["tripduration"] = +d["tripduration"];
+                    d["start station name"] = d["start station name"];
+                    d["end station name"] = d["end station name"];
+                    d["birth year"] =  Math.floor((2013-d["birth year"])/10)*10;
+                });
+
+                data = csvData;
+
+                barplot1 = new Barplot1("#barplot1", data);
+                barplot1.initialize();
+
+                updateBarplot1();
+                d3.selectAll("[id =s-station]").on("change", updateBarplot1);
+                d3.selectAll("[id =e-station]").on("change", updateBarplot1);
+  //              d3.selectAll("#use-color").on("change", updateBarplot1);
+
+                // TODO: bind an event handler to "brush" events
+                barplot1.on("brush", (brushedItems) => {
+                    brushedData = brushedItems;
+                    updateBarplot2();
+                    updateDataTable();
+                });
+
+                barplot2 = new Barplot2("#barplot2");
+                barplot2.initialize();
+
+
+                dataTable = new DataTable("#data-table");
+
+                updateDataTable();
+    })
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
